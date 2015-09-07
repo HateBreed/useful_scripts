@@ -1,0 +1,5 @@
+#!/bin/bash
+JACKHOME="$HOME/jackd"
+cp $JACKHOME/.jackdrc.play $JACKHOME/.jackdrc
+$HOME/bin/userjackd.sh "game" "PlaybackBuiltinAudioDigitalSurround51PulseAudioMixer" "output:hdmi-surround-extra1"
+#"PlaybackBuiltinAudioDigitalStereoIEC958PulseAudioMixer"

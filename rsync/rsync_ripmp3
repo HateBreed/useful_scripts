@@ -1,0 +1,26 @@
+#!/bin/bash
+
+MP3PATH="/home/Media/MP3"
+UPLOADPATH="UPLOAD"
+REMOTEPATH="/media/verkkolevy1/Musiikki/Metal/"
+
+if [ ! -d $MP3PATH ] ; then exit ; fi
+cd $MP3PATH
+if [ ! "$(ls -A $UPLOADPATH)" ] ; then exit ; fi
+echo ""
+echo "$(date) In: $PWD"
+
+if [ "$(mount|grep -e verkkolevy1)" ] ; then
+	rsync -acv --no-g --chmod=ug=rwX,o=rX $UPLOADPATH/* $REMOTEPATH
+
+	find $UPLOADPATH/* -type d|while read i ; do
+		MVPATH=$(echo $i|sed 's/UPLOAD\///')
+		if [[ "$MVPATH" == *"/"* ]] ; then
+			BAND=$(echo "$MVPATH"|cut -d'/' -f1)
+			if [ ! -d "$PWD"/"$BAND" ] ; then mkdir "$PWD"/"$BAND" && echo "Created folder \"$BAND\""; fi
+			ALBUM=$(echo "$MVPATH"|cut -d'/' -f2)
+			mv -v "$i" "$PWD"/"$BAND"/"$ALBUM"
+			rm -rv "$UPLOADPATH"/"$BAND"
+		fi
+	done
+fi

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+sleep 30
+killall conky
+sleep 5
+if ! pidof conky ; then
+	nice -n 15 conky 1>/dev/null 2>/dev/null &
+else
+	echo "conky was running" >> /tmp/conkytest.log
+fi

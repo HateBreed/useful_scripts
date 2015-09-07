@@ -1,0 +1,136 @@
+#!/bin/bash
+
+FOLDERLIST="$HOME/.backupfolders"
+LOGPREFIX=$(date "+%d-%m-%Y")
+DEBUG=1
+
+print_log() {
+	if [ ! -z "$1" ] ; then 
+		if [ "$DEBUG" -eq "1" ]; then
+			echo "[$LOGPREFIX] : \""$1"\""
+		fi
+	fi
+}
+
+add_to_folderlist() {
+	if [ -z "$1" ] ; then return ; fi
+	# No file - empty -> just add line
+	if [ -f $FOLDERLIST ] ; then
+		# There already is a line
+		if grep $FOLDERLIST -e "$1" ; then print_log "Line \"$1\" already exists, not added" ; return ; fi
+	fi
+	echo "$1" >> "$FOLDERLIST"
+	print_log "Added line \"$1\" to backupdatabase"
+}
+
+remove_from_folderlist() {
+	if [ -z "$1" ] ; then return ; fi
+  	# No file - empty -> just add line
+    if [ -f $FOLDERLIST ] ; then
+    	# Replace all / to \/ for sed
+    	LINE=$(echo "$1"|sed 's/\//\\\//g'|sed 's/\./\\\./g')
+			# Remove line from backupfolders
+			sed -i  '/^'$LINE'$/d' "$FOLDERLIST"
+			print_log "Removed \"$1\" from backupdatabase"
+	fi
+}
+
+clear_backupfolders() {
+	if [ -f $FOLDERLIST ] ; then mv $FOLDERLIST $FOLDERLIST.bak ; fi
+}
+
+check_backupfolders() {
+	if [ -f $FOLDERLIST ] ; then
+		if [ ! -s $FOLDERLIST ] ; then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 0
+	fi
+}
+
+select_backupfolders() {
+	C=0
+	DIRS=$(zenity --file-selection --directory --multiple --filename=$HOME/)
+
+	IFS=$'|'
+	for i in $DIRS; do
+		C=$((C+1))
+		add_to_folderlist "$i"
+	done
+	unset IFS
+
+	if zenity --question --text="Show selected folders?" --cancel-label="No, quit" ; then
+  	edit_backupfolders
+  fi
+}
+
+review_backupfolders() {
+	if zenity --question --text="Review changes?" --ok-label="Review" --cancel-label="Quit" ; then
+	  edit_backupfolders
+	fi
+}
+
+edit_backupfolders() {
+	COUNT=0
+	LONGEST=0
+	while read FOLDER; do
+		FOLDERS+=("FALSE")
+		FOLDERS+=("$FOLDER")
+		COUNT=$((COUNT+1))
+		if [ ${#FOLDER} -gt $LONGEST ] ; then LONGEST=${#FOLDER} ; fi
+	done < "$FOLDERLIST"
+	COUNT=$((COUNT*20+30))
+	LONGEST=$((LONGEST*10))
+	DIRS=$(zenity --list --text="Backup directory database" --checklist --multiple --column="Remove" --column="Directory to backup" "${FOLDERS[@]}" --ok-label="Remove selected" --cancel-label="Cancel" --width="$LONGEST" --height="$COUNT")
+	if [ ! -z "$DIRS" ] ; then
+		IFS=$'|'
+		for i in $DIRS; do
+			remove_from_folderlist "$i"
+		done
+		unset IFS
+	fi
+	unset FOLDERS
+	review_backupfolders
+}
+
+add_backupfolders() {
+	select_backupfolders
+	review_backupfolders
+}
+
+reselect_backupfolders() {
+	if zenity --question --text="Confirm action, this removes old database (saved as $FOLDERLIST.bak)" --ok-label="Continue" --cancel-label="Cancel" ; then
+		clear_backupfolders
+		select_backupfolders
+	else
+		revise_backupfolders
+	fi
+}
+
+revise_backupfolders() {
+	if zenity --question --text="Edit database or Add new to database" --ok-label="Add" --cancel-label="Edit" ; then
+		add_backupfolders
+	else
+		edit_backupfolders
+	fi
+}
+
+main_dialog() {
+	if check_backupfolders ; then
+		zenity --info --text="The database is empty, select folders to backup"
+		select_backupfolders
+	else
+		if zenity --question --text="Database exists, reselect folders?" --ok-label="Reselect" --cancel-label="Edit old" ; then
+			reselect_backupfolders
+		else
+			revise_backupfolders
+		fi
+	fi
+}
+
+print_log "started"
+main_dialog
+print_log "stopped"

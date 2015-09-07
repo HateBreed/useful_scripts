@@ -1,0 +1,6 @@
+#!/bin/bash
+JACKHOME="$HOME/jackd"
+cp $JACKHOME/.jackdrc.hdmi $JACKHOME/.jackdrc
+$HOME/bin/userjackd.sh "hdmi" "PlaybackJacksinkPulseAudioJACKSinkPulseAudioMixer"
+#"HDAIntelPCHAlsamixer"
+

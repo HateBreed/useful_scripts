@@ -1,0 +1,16 @@
+#!/bin/bash
+
+SCUMMPATH="Games/ScummVMSaves"
+LOCAL="$HOME/$SCUMMPATH"
+REMOTE="/media/verkkolevy1/$SCUMMPATH"
+
+if [ ! -d $LOCAL ] ; then mkdir $LOCAL ; fi
+if [ ! -d $REMOTE ] ; then 
+  echo "Networked disk not available"
+  exit 1
+fi
+
+# Get 
+rsync -avuzh --no-g --exclude '*~' "$REMOTE/" "$LOCAL"
+# Put
+rsync -Cavuzh --no-g --chmod=Fu=rw,Fg=rw,Fo=r "$LOCAL/" "$REMOTE"

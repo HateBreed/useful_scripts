@@ -1,0 +1,40 @@
+#!/bin/bash
+
+#if ! pidof qjackctl
+#  then
+#    qjackctl &
+#    echo "started qjackctl"
+#    sleep 1
+#else
+#  echo "qjackctl running"
+#fi
+
+#if ! pidof tuxguitar
+#  then
+#    reload_pulse
+#    sleep 1
+#fi
+
+#$HOME/bin/audio.record
+
+if ! pidof qsynth
+  then
+    nice -n -10 qsynth &
+    #qsynth &
+    echo "started qsynth"
+    sleep 1
+else
+  echo "qsynth running"
+fi
+
+#export J2D_PIXMAPS=server && nice -n -10 tuxguitar "$@"
+#export J2D_PIXMAPS=server &&
+#nice -n -10 $HOME/Downloads/tuxguitar-1.2-jet/./tuxguitar "$@"
+nice -n -10 tuxguitar "$@"
+
+if ! pidof -x tuxguitar
+  then
+    killall qsynth
+fi
+
+#killall qjackctl.real

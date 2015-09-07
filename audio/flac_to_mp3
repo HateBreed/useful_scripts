@@ -1,0 +1,12 @@
+#!/bin/bash
+
+DESTF="$HOME/Dropbox/proggis_x/heavy/finished/rumpuraidat/"
+
+find *|grep flac|while read line; do 
+	MP3FILE=$(basename $line|sed 's/\.flac/\.mp3/')
+	
+	if [ ! -f "$DESTF/$MP3FILE" ] ; then
+		echo "Convert $line to $DESTF$MP3FILE"
+		lame --vbr-old -V 4 $line $DESTF$MP3FILE
+	fi
+done

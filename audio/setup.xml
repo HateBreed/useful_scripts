@@ -1,0 +1,83 @@
+<!DOCTYPE patchbay>
+<patchbay version="0.3.10" name="setup">
+ <output-sockets>
+  <socket exclusive="off" client="system" type="jack-audio" name="system">
+   <plug>capture_1</plug>
+   <plug>capture_2</plug>
+  </socket>
+  <socket exclusive="off" client="rosegarden" type="alsa-midi" name="rosegarden">
+   <plug>out 1 - General MIDI Device</plug>
+  </socket>
+  <socket exclusive="off" client="PulseAudio JACK Sink" type="jack-audio" name="PulseAudio JACK Sink">
+   <plug>front-left</plug>
+   <plug>front-right</plug>
+  </socket>
+  <socket exclusive="off" client="Music Player Daemon" type="jack-audio" name="Music Player Daemon">
+   <plug>left</plug>
+   <plug>right</plug>
+  </socket>
+  <socket exclusive="off" client="qsynth" type="jack-audio" name="qsynth">
+   <plug>left</plug>
+   <plug>right</plug>
+  </socket>
+  <socket exclusive="off" client="alsa_pcm" type="jack-midi" name="alsa_pcm">
+   <plug>Midi-Through/midi_capture_1</plug>
+   <plug>MPU-401-UART/midi_capture_1</plug>
+  </socket>
+  <socket exclusive="off" client="TuxGuitar" type="jack-midi" name="TuxGuitar">
+   <plug>Output Port 0</plug>
+  </socket>
+  <socket exclusive="off" client="Midi Through" type="alsa-midi" name="Midi Through">
+   <plug>Midi Through Port-0</plug>
+  </socket>
+  <socket exclusive="off" client="MPU-401 UART" type="alsa-midi" name="MPU-401 UART">
+   <plug>MPU-401 UART MIDI</plug>
+  </socket>
+ </output-sockets>
+ <input-sockets>
+  <socket exclusive="off" client="rosegarden" type="alsa-midi" name="hydrogen">
+   <plug>external controller</plug>
+  </socket>
+  <socket exclusive="off" client="system" type="jack-audio" name="system">
+   <plug>playback_1</plug>
+   <plug>playback_2</plug>
+  </socket>
+  <socket exclusive="off" client="PulseAudio JACK Source" type="jack-audio" name="PulseAudio JACK Source">
+   <plug>front-left</plug>
+   <plug>front-right</plug>
+  </socket>
+  <socket exclusive="off" client="alsa_pcm" type="jack-midi" name="alsa_pcm">
+   <plug>Midi-Through/midi_playback_1</plug>
+   <plug>MPU-401-UART/midi_playback_1</plug>
+   <plug>FLUID-Synth-\([0-9]+\)/midi_playback_1</plug>
+  </socket>
+  <socket exclusive="off" client="alsa_pcm" type="jack-midi" name="alsa_pcm 2">
+   <plug>FLUID-Synth-\([0-9]+\)/midi_playback_1</plug>
+  </socket>
+  <socket exclusive="off" client="Midi Through" type="alsa-midi" name="Midi Through">
+   <plug>Midi Through Port-0</plug>
+  </socket>
+  <socket exclusive="off" client="MPU-401 UART" type="alsa-midi" name="MPU-401 UART">
+   <plug>MPU-401 UART MIDI</plug>
+  </socket>
+  <socket exclusive="off" client="FLUID Synth \([0-9]+\)" type="alsa-midi" name="FLUID Synth (7964)">
+   <plug>Synth input port \([0-9]+:0\)</plug>
+  </socket>
+  <socket exclusive="off" client="jack_midi" type="alsa-midi" name="jack_midi">
+   <plug>port</plug>
+  </socket>
+ </input-sockets>
+ <slots/>
+ <cables>
+  <cable output="system" input="PulseAudio JACK Source" type="jack-audio"/>
+  <cable output="PulseAudio JACK Sink" input="system" type="jack-audio"/>
+  <cable output="Music Player Daemon" input="system" type="jack-audio"/>
+  <cable output="qsynth" input="system" type="jack-audio"/>
+  <cable output="TuxGuitar" input="alsa_pcm 2" type="jack-midi"/>
+  <cable output="TuxGuitar" input="alsa_pcm" type="jack-midi"/>
+  <cable output="Midi Through" input="jack_midi" type="alsa-midi"/>
+  <cable output="Midi Through" input="FLUID Synth (7964)" type="alsa-midi"/>
+  <cable output="MPU-401 UART" input="jack_midi" type="alsa-midi"/>
+ </cables>
+</patchbay>
+

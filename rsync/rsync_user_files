@@ -1,0 +1,17 @@
+#!/bin/bash
+
+SERVER=server
+USERNAME=$(whoami)
+RSYNCPAR='-Cavh --delete --safe-links'
+BACKUPLIST="$HOME/.backupfolders"
+EXCLUDE="$HOME/.backupexclude"
+
+BACKUPDIR="/volume1/NetBackup/$USERNAME/$(hostname)/"
+
+if [ ! -f "$BACKUPLIST" ] ; then exit ; fi
+
+if ping -c 1 -q -W 1 $SERVER  > /dev/null ; then
+	while read line ; do
+		rsync $RSYNCPAR --exclude-from=$EXCLUDE --delete-excluded $line $USERNAME@$SERVER:$BACKUPDIR/
+	done < "$BACKUPLIST"
+fi

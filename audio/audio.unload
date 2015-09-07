@@ -1,0 +1,4 @@
+#!/bin/bash
+killall pulseaudio
+killall jackd
+#unlink $HOME/.jackdrc

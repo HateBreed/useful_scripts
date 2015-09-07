@@ -1,0 +1,23 @@
+#!/bin/bash
+
+WEATHERDUMP="/tmp/weatherdump"
+IMGPATH="/usr/share/xfce4/weather/icons/liquid/128/"
+IMGEXT=".png"
+
+CONTENT=$(cat $WEATHERDUMP)
+
+IMGID=$(echo $CONTENT|cut -d',' -f1|tr '[A-Z]' '[a-z]')
+if [ "$IMGID" = "cloud-night" ] || [ "$IMGID" = "sleet-night" ] || [ "$IMGID" = "lightrain-night" ] || [ "$IMGID" = "fog-night" ] || [ "$IMGID" = "snow-night" ] ; then IMGID=$(echo $IMGID|cut -d'-' -f1) ; fi
+TEMP=$(echo $CONTENT|cut -d',' -f2)
+HUMID=$(echo $CONTENT|cut -d',' -f3)
+WIND_SPEED=$(echo $CONTENT|cut -d',' -f4)
+WIND_DIR=$(echo $CONTENT|cut -d',' -f5)
+
+echo '${image' $IMGPATH$IMGID$IMGEXT '-p 60,195 -s 80x80\}'
+echo -n '${font eufm10:size=26}${alignc -5}'
+echo "$TEMP"'${font Linux Biolinum O:size=22}'" °C"
+echo '${font eufm10:size=14}${alignc -5}'"$WIND_SPEED"'${font Linux Biolinum O:size=10}'" KM/H "'${font size=14}'"$WIND_DIR"
+#echo '${font eufm10:size=14}${alignc 0}'"UVI=$UV"
+#echo -n '${font eufm10:size=14}'
+#echo '${alignc}'"$HUMID"'${font Linux Biolinum Capitals O:size=12}asd'
+

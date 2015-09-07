@@ -1,0 +1,5 @@
+#!/bin/bash
+JACKHOME="$HOME/jackd"
+cp $JACKHOME/.jackdrc.play $JACKHOME/.jackdrc
+$HOME/bin/userjackd.sh "desktop" "PlaybackJacksinkPulseAudioJACKSinkPulseAudioMixer" "output:iec958-stereo+input:analog-stereo"
+#"PlaybackBuiltinAudioDigitalStereoIEC958PulseAudioMixer"

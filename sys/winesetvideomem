@@ -1,0 +1,11 @@
+#!/bin/bash
+if [ -z $1 ] ; then
+	echo "Give memory size in MB"
+	exit 0
+fi
+
+if [ ! -z $2 ] ; then
+	WINEPREFIX="$2" && echo -e "[HKEY_CURRENT_USER\\Software\\Wine\\Direct3D]\n\"VideoMemorySize\"=\"$1\"" | wine regedit -
+else
+	echo -e "[HKEY_CURRENT_USER\\Software\\Wine\\Direct3D]\n\"VideoMemorySize\"=\"$1\"" | wine regedit -
+fi

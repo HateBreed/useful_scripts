@@ -1,0 +1,24 @@
+#!/bin/bash
+
+SUMOPATH="/usr/lib/chromium/libffmpegsumo.so"
+LIBPATH="/usr/lib/x86_64-linux-gnu/opera-developer/lib_extra"
+
+if [ $(whoami) = "root" ] ; then
+	if [ "$1" = "unlink" ] ; then 
+		echo "removing symlinks"
+		unlink $LIBPATH/libffmpeg.so.32
+		unlink $LIBPATH/libffmpeg.so.31
+	else
+		if [ ! -d $LIBPATH ] ; then
+			mkdir $LIBPATH
+		fi
+		
+		if [ "$1" = "developer" ] ; then
+			ln -fs $SUMOPATH $LIBPATH/libffmpeg.so.32
+		else
+			ln -fs $SUMOPATH $LIBPATH/libffmpeg.so.31
+		fi
+	fi
+else
+	echo "not root"
+fi

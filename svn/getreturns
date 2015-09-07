@@ -1,0 +1,93 @@
+#!/bin/bash
+
+logmsg () {
+        if [ -z "$1" ] ; then
+	                echo "empty liner"
+        else
+                echo "$PREFIX: $1"
+        fi
+}
+
+# Invalid amount of parameters
+if test $# -ne 3 ; then
+	echo "Give Course code, prefix in SVN and assignment number (e.g. A 1, Ex 1)"
+	echo "A = Assignments, Ex = Exercises, Le = Lectures, Lab = Labworks"
+	exit 1
+fi
+
+CONFFILE="$HOME/.returns/$1.conf"
+
+if [ ! -f "$CONFFILE" ] ; then
+	logmsg "No $1.conf - quitting"
+	exit 1
+else
+	source "$CONFFILE"
+fi
+
+SVNSERVER="$SERVER/$COURSE"
+RETURNCOUNT=0
+
+TYPE=$2
+if [ "$TYPE" = "A" ] ; then
+	TARGET="Assignments"
+elif [ "$TYPE" = "Ex" ] ; then
+	TARGET="Exercises"
+elif [ "$TYPE" = "Le" ] ; then
+	TARGET="Lectures"
+elif [ "$TYPE" = "Lab" ] ; then
+	TARGET="Labworks"
+else
+	exit 1
+fi
+
+DEST="$DEST/$TARGET"
+SMBDEST="$SMBDEST/$TARGET"
+
+PREFIX="$TYPE$3"
+PREFIXLOWER=$(echo $PREFIX|tr [:upper:] [:lower:])
+PREFIXUPPER=$(echo $PREFIX|tr [:lower:] [:upper:])
+
+# Create folder if it does not exist
+if [ ! -d $DEST ] ; then
+	mkdir -p $DEST
+fi
+
+# Check the students in repository
+logmsg "Starting to checkout $PREFIX `date`"
+for STUDENT in `svn list $SVNSERVER` ; do
+	# Is a student number (7 digits) followed by trailing "/"
+	if [[ $STUDENT =~ ^[0-9]{0,7}[\/]$ ]] ; then
+		# Get the folder list for this student
+		for ASSIGNMENT in `svn list "$SVNSERVER/$STUDENT"` ; do
+			# Folder can be found
+			if [ "$ASSIGNMENT" = "$PREFIX/" ] || [ "$ASSIGNMENT" = "$PREFIXLOWER/" ] || [ "$ASSIGNMENT" = "$PREFIXUPPER/" ] ; then
+				# Get the assignment
+				logmsg "Checkout $ASSIGNMENT of $STUDENT to $DEST/$ASSIGNMENT"
+				svn checkout "$SVNSERVER/$STUDENT$ASSIGNMENT/" "$DEST/$PREFIX/$STUDENT"
+				RETURNCOUNT=$((RETURNCOUNT+1))
+			fi
+		done
+	fi
+done
+
+logmsg "Checked out $RETURNCOUNT assignments"
+
+# Check if the home is mounted and mount if not
+MOUNTCHECK=`mount|grep "$SMBREM"`
+if [ -z "$MOUNTCHECK" ] ; then
+	logmsg "Mounting shares"
+	$SMBCMD
+else
+	logmsg "Shares already mounted"
+fi
+
+# The directory exists if mount was success or already mounted
+if [ -d $SMBDEST ] ; then
+	cp -r "$DEST/$PREFIX/" "$SMBDEST/"
+	logmsg "Copied $PREFIX from $DEST to $SMBDEST"
+else
+	logmsg "Cannot copy, mounting probably failed."
+fi
+
+logmsg "Ended in `date`"
+

@@ -1,0 +1,90 @@
+#!/bin/bash
+
+CONFFILE="$HOME/.returns/$1.conf"
+
+if [ ! -f "$CONFFILE" ] ; then
+        logmsg "No $1.conf - quitting"
+        exit 1
+else
+        source "$CONFFILE"
+fi
+
+if [ $# -ne 4 ] ; then
+	exit 1
+fi
+
+TYPE="$2"
+EXNUM="$3"
+TASKS="$4"
+
+COUNT=0
+
+if [ "$TYPE" = "A" ] ; then
+	TARGET="Assignments"
+elif [ "$TYPE" = "Ex" ] ; then
+  	TARGET="Exercises"
+fi
+
+APATH="$DEST/$TARGET"
+ATTF="$TYPE$EXNUM""_att_sheet.csv"
+
+PREFIX="$TYPE$3"
+ATTSHEET="$APATH/$ATTF"
+
+if [ -f $ATTSHEET ] ; then
+	rm $ATTSHEET
+fi
+
+TASKHEADER=","
+TASKROW=",,"
+if [ $TASKS -gt 1 ] ; then
+	TCOUNT=0
+	while [ $TCOUNT -lt $TASKS ] ; do
+		TCOUNT=$((TCOUNT+1))
+		TASKHEADER="$TASKHEADER""T$TCOUNT,"
+		TASKROW="$TASKROW,"
+	done
+fi
+
+echocsv () {
+	if [ ! -z "$1" ] ; then
+		echo "$1" >> "$ATTSHEET"
+	fi
+}
+
+echo "$ATTSHEET"
+echo "$APATH"
+echocsv ",Exercise $EXNUM,`date +%d.%m.%Y`"
+echocsv " "
+echocsv "#,Student number,Returned (SVN)""$TASKHEADER""Activity (ready to discuss)"
+
+for STD in `ls "$APATH/$PREFIX"` ; do
+	if [[ $STD =~ ^[0-9]{0,7}$ ]] ; then
+		COUNT=$((COUNT+1))
+		STDLINE="$COUNT ,\" $STD\""
+		if [ "$(ls -A $APATH/$PREFIX/$STD)" ] ; then
+			if [ "$(ls $APATH/$PREFIX/$STD/*.c)" ] || [ "$(ls $APATH/$PREFIX/$STD/*.txt)" ] || [ "$(ls $APATH/$PREFIX/$STD/readme)" ] || [ "$(ls $APATH/$PREFIX/$STD/README)" ] || [ "$(ls $APATH/$PREFIX/$STD/ReadMe)" ] || [ "$(ls $APATH/$PREFIX/$STD/*.cre)" ] || [ "$(ls $APATH/$PREFIX/$STD/answers)" ] ; then
+				STDLINE="$STDLINE,x$TASKROW"
+			else
+				STDLINE="$STDLINE,$TASKROW"
+			fi
+		else
+			STDLINE="$STDLINE,$TASKROW"
+		fi
+		echocsv "$STDLINE"
+	fi
+done
+
+RECCOUNT=$((COUNT+15))
+
+while [ $COUNT -lt $RECCOUNT ] ; do
+	COUNT=$((COUNT+1))
+	echocsv "$COUNT,,,,"
+done
+
+if [ $(pidof oosplash) ] ; then killall oosplash ; fi
+if [ $(pidof soffice) ] ; then killall -9 soffice ; fi
+cd $APATH && unoconv -t ex_sheet_template.ots -d spreadsheet -f ods -i FilterOptions=44,34,76,1,1/1/2/2 "$ATTF" 
+soffice --headless -p $(echo "$ATTF"|sed 's/\.csv/\.ods/')
+#&& xdg-open $(echo "$ATTF"|sed 's/\.csv/\.ods/')
+#

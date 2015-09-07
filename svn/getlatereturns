@@ -1,0 +1,121 @@
+#!/bin/bash
+
+logmsg () {
+        if [ -z "$1" ] ; then
+                echo "empty liner"
+        else
+                echo "$PREFIX: $1"
+        fi
+}
+
+# Invalid amount of parameters
+if test $# -ne 3 ; then
+	echo "Give Course code, prefix in SVN and assignment number (e.g. A 1, Ex 1)"
+	echo "A = Assignments, Ex = Exercises, Le = Lectures, Lab = Labworks"
+	exit 1
+fi
+
+CONFFILE="$HOME/.returns/$1.conf"
+
+if [ ! -f "$CONFFILE" ] ; then
+	logmsg "No $1.conf - quitting"
+	exit 1
+else
+	source "$CONFFILE"
+fi
+
+
+SVNSERVER="$SERVER/$COURSE"
+RETURNCOUNT=0
+
+TYPE=$2
+
+if [ "$TYPE" = "A" ] ; then
+	TARGET="Assignments"
+elif [ "$TYPE" = "Ex" ] ; then
+	TARGET="Exercises"
+elif [ "$TYPE" = "Le" ] ; then
+	TARGET="Lectures"
+elif [ "$TYPE" = "Lab" ] ; then
+	TARGET="Labworks"
+else
+	exit 1
+fi
+
+PREFIX="$TYPE$3"
+PREFIXLOWER=$(echo $PREFIX|tr [:upper:] [:lower:])
+PREFIXUPPER=$(echo $PREFIX|tr [:lower:] [:upper:])
+
+TGTDEST="$DEST/$TARGET"
+SMBLATEDEST="$SMBDEST/$TARGET/Late"
+LATERET="$TGTDEST/Late"
+
+
+# Create folder if it does not exist
+if [ ! -d $LATERET ] ; then
+  mkdir -p $LATERET
+fi
+
+# Check the students in repository
+logmsg "Starting to checkout $1 late returns `date`"
+for STUDENT in `svn list $SVNSERVER` ; do
+	# Is a student number (7 digits) followed by trailing "/"
+	if [[ $STUDENT =~ ^[0-9]{0,7}[\/]$ ]] ; then
+		# Get the folder list for this student
+		for ASSIGNMENT in `svn list "$SVNSERVER/$STUDENT"` ; do
+			# Folder can be found
+			if [ "$ASSIGNMENT" = "$PREFIX/" ] || [ "$ASSIGNMENT" = "$PREFIXLOWER/" ] || [ "$ASSIGNMENT" = "$PREFIXUPPER/" ] ; then
+				# If no folder for this student exists yet
+				if [ ! -d "$TGTDEST/$PREFIX/$STUDENT" ] ; then
+					# Get the assignment
+					logmsg "Checkout $ASSIGNMENT late return of $STUDENT to $LATERET/$PREFIX"
+					svn checkout "$SVNSERVER/$STUDENT$ASSIGNMENT/" "$LATERET/$PREFIX/$STUDENT"
+					RETURNCOUNT=$((RETURNCOUNT+1))
+				else
+					if [ "$(ls -A $TGTDEST/$PREFIX/$STUDENT)" ] ; then
+						if [ "$(ls $TGTDEST/$PREFIX/$STUDENT*.c)" ] || [ "$(ls $TGTDEST/$PREFIX/$STUDENT*.txt)" ] || [ "$(ls $TGTDEST/$PREFIX/$STUDENT*.pdf)" ] ; then
+							logmsg "Student: $STUDENT returned in time."
+						else
+							logmsg "Student: $STUDENT had no .c/.txt/.pdf-files in timely return."
+							logmsg "Checkout late return of $STUDENT to $LATERET/$PREFIX"
+							svn checkout "$SVNSERVER/$STUDENT$ASSIGNMENT/" "$LATERET/$PREFIX/$STUDENT"
+							RETURNCOUNT=$((RETURNCOUNT+1))
+						fi
+					else
+						logmsg "Student $STUDENT had empty directory in timely return"
+						logmsg "Checkout late return of $STUDENT to $LATERET/$PREFIX"
+						svn checkout "$SVNSERVER/$STUDENT$ASSIGNMENT/" "$LATERET/$PREFIX/$STUDENT"
+						RETURNCOUNT=$((RETURNCOUNT+1))
+					fi  
+				fi
+			fi
+		done
+	fi
+done
+
+logmsg "Checked out $RETURNCOUNT assignments"
+
+# Check if the home is mounted and mount if not
+MOUNTCHECK=`mount|grep "$SMBREM"`
+if [ -z "$MOUNTCHECK" ] ; then
+	logmsg "Mounting shares"
+	$SMBCMD
+else
+	logmsg "Shares already mounted"
+fi
+
+if [ "$RETURNCOUNT" -gt 0 ] ; then
+	# The directory exists if mount was success or already mounted
+	if [ -d $SMBDEST/$TARGET ] ; then
+		if [ ! -d $SMBLATEDEST ] ; then mkdir $SMBLATEDEST ; fi
+		cp -r "$LATERET/$PREFIX/" "$SMBLATEDEST/"
+		logmsg "Copied $PREFIX from $LATERET to $SMBLATEDEST"
+	else
+		logmsg "Cannot copy, mounting probably failed."
+	fi
+else
+  	logmsg "Nothing to copy"
+fi
+
+logmsg "Late return check ended in `date`"
+

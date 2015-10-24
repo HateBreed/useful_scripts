@@ -1,0 +1,53 @@
+#!/bin/bash
+ROM=$(echo "$2"|sed "s/;//g")
+BNAME=$(echo "$1"|xargs basename)
+echo "$1 ($BNAME) $2 ($ROM)" >> $HOME/runemu.log
+
+#set -m
+#xset s off
+#xset s noblank
+wmctrl -x -r xbmc -b remove,fullscreen
+LIRCBASE=".lircrc"
+if [ "$BNAME" = "mednafen" ] ; then
+	LIRCF="$LIRCBASE.$BNAME"
+else
+	LIRCF="$LIRCBASE.emu"
+fi
+#cat $HOME/$LIRCF > $HOME/$LIRCBASE
+if [ $(pidof irxevent) ] ; then killall irxevent ; fi
+xbmc-send -a "LIRC.Stop"
+irxevent $HOME/$LIRCF &
+irexec $HOME/$LIRCF &
+#xbmc-send -a "LIRC.Stop"
+$HOME/bin/runXBMCemuhelper "$BNAME" &
+xset s off
+xset s noblank
+xset -dpms
+CRASHED=false
+if [ "$BNAME" = "mupen64plus" ] ; then
+	if ! lxterminal -e "$1 \"$ROM\"" ; then CRASHED=true ; fi
+elif [ "$BNAME" = "mednafen" ] ; then
+        if ! lxterminal -e "$1 \"$ROM\"" ; then CRASHED=true ; fi
+else
+	if ! sh -c "$1 \"$ROM\"" ; then CRASHED=true ; fi
+fi
+
+if $CRASHED ; then xrandr -s 1920x1080 ; fi
+xset s on
+xset s blank
+xset +dpms
+sleep 1
+#if pidof openbox ; then killall openbox ; fi
+#if pidof openbox ; then killall -9 openbox ; fi
+killall irxevent
+killall irexec
+#rm $HOME/.lircrc
+killall -CONT xbmc.bin
+xbmc-send -a "LIRC.Start"
+wmctrl -x -r xbmc.bin -b remove,hidden
+wmctrl -x -r xbmc -b add,fullscreen
+wmctrl -a xbmc.bin
+xrandr -s 1920x1080
+#irxevent $HOME/.lircrc.system
+#killall openbox
+#if pidof openbox ; then killall -9 openbox ; fi

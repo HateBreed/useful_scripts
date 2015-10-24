@@ -1,0 +1,23 @@
+#!/bin/bash
+
+COUNTER=0
+
+echo "$(date) helping with $1" >> ~/emuhelper.log
+while [ ! $(pidof "$1") ] ; do
+	sleep 1
+	COUNTER=$((COUNTER+1))
+	if [ $COUNTER -gt 10 ] ; then
+		echo "$(date) $1 did not start in $COUNTER seconds" >> ~/emuhelper.log
+		exit
+	fi
+done
+echo "$(date) $1 running" >> ~/emuhelper.log
+sleep 4
+killall -STOP xbmc.bin
+echo "$(date) stopped XBMC for $1" >> ~/emuhelper.log
+while [ $(pidof "$1") ] ; do sleep 5 ; done
+killall -CONT xbmc.bin
+xbmc-send -a "LIRC.Start"
+wmctrl -a xbmc.bin
+xrandr -s 1920x1080
+echo "$(date) continued XBMC for $1" >> ~/emuhelper.log

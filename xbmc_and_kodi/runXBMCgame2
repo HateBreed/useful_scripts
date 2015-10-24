@@ -1,0 +1,34 @@
+#!/bin/bash
+
+OPENBOXUSAGE="/tmp/xbmcopenbox"
+CRASHED=false
+if [ $# -gt 0 ] ; then
+	if [ $(pidof openbox) ] ; then
+		if ! ls $OPENBOXUSAGE.* ; then
+			killall openbox
+		fi
+	fi
+	if [ $(pidof irxevent) ] ; then killall irxevent ; fi
+	openbox &
+	irxevent $HOME/.lircrc.game &
+	xbmc-send -a "LIRC.Stop"
+	killall -STOP xbmc.bin
+	sleep 2
+	echo "$(date) $@" >> $HOME/xbmcgame.log
+	if ! $@ ; then CRASHED=true ; fi
+	killall -CONT xbmc.bin
+	killall irxevent
+	xbmc-send -a "LIRC.Start"
+	wmctrl -a xbmc
+	#wmctrl -x -r xbmc -b add,fullscreen
+	if $CRASHED ; then
+		sleep 2
+		echo "$(date) $1 crash" >> $HOME/xbmcgame.log
+		xrandr -s 1920x1080
+	fi
+	if ! ls $OPENBOXUSAGE.* 2>/dev/null ; then
+		killall openbox
+	fi
+	xrandr -s 1920x1080
+	#irxevent $HOME/.lircrc.system
+fi

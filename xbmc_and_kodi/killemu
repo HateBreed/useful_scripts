@@ -1,0 +1,13 @@
+#!/bin/bash
+
+EMU=$(tail -1 $HOME/runemu.log|cut -d'(' -f2|cut -d')' -f1)
+if [ -z "$EMU" ] ; then exit ; fi
+if pidof $EMU ; then
+	killall $EMU
+	if pidof $EMU ; then
+		sleep 2
+        	killall -9 $EMU
+	fi
+	sleep 5
+	xrandr -s 1920x1080
+fi

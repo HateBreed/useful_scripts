@@ -1,22 +1,42 @@
 #!/bin/bash
-
-SUMOPATH="/usr/lib/chromium/libffmpegsumo.so"
-LIBPATH="/usr/lib/x86_64-linux-gnu/opera-developer/lib_extra"
+FFMPEGPATH="/usr/local/lib/ffmpeg"
 
 if [ $(whoami) = "root" ] ; then
+
+	if [ ! $(which apt) ] ; then
+		echo "no apt installed, quitting"
+		exit 1
+	fi
+
+	echo -n "Checking Opera version."
+	if [ $(which opera-developer) ] ; then
+		echo -n "."
+		OPERAVERSION=$(apt version opera-developer|cut -d'.' -f1)
+		LIBPATH="/usr/lib/x86_64-linux-gnu/opera-developer/lib_extra"
+		echo ". opera developer $OPERAVERSION installed"
+	elif [ $(which opera) ] ; then
+		echo "."
+        	OPERAVERSION=$(apt version opera|cut -d'.' -f1)
+		LIBPATH="/usr/lib/x86_64-linux-gnu/opera/lib_extra"
+		echo ". opera $OPERAVERSION installed"
+	else
+	        echo ". no Opera / Opera Developer installed"
+	        exit 1
+	fi
+
 	if [ "$1" = "unlink" ] ; then 
 		echo "removing symlinks"
-		unlink $LIBPATH/libffmpeg.so.32
-		unlink $LIBPATH/libffmpeg.so.31
+		unlink $LIBPATH/libffmpeg.so.$OPERAVERSION
 	else
 		if [ ! -d $LIBPATH ] ; then
 			mkdir $LIBPATH
 		fi
-		
-		if [ "$1" = "developer" ] ; then
-			ln -fs $SUMOPATH $LIBPATH/libffmpeg.so.32
-		else
-			ln -fs $SUMOPATH $LIBPATH/libffmpeg.so.31
+
+		if [ $(readlink $LIBPATH/libffmpeg.so.$OPERAVERSION) = "$FFMPEGPATH/libffmpeg.so" ] ; then
+			echo "Symlink exists to FFMPEG library"
+		else 
+			echo "Adding symlink"
+			ln -fs $FFMPEGPATH/libffmpeg.so $LIBPATH/libffmpeg.so.$OPERAVERSION
 		fi
 	fi
 else

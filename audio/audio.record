@@ -1,6 +1,6 @@
 #!/bin/bash
 JACKHOME="$HOME/jackd"
 cp $JACKHOME/.jackdrc.rec $JACKHOME/.jackdrc
-$HOME/bin/userjackd.sh "record" "PlaybackJacksinkPulseAudioJACKSinkPulseAudioMixer"
+$HOME/bin/setupaudio "record" "PlaybackJacksinkPulseAudioJACKSinkPulseAudioMixer"
 #"HDAIntelPCHAlsamixer"
 #"PlaybackJacksinkPulseAudioJACKSinkPulseAudioMixer"
